@@ -57,83 +57,101 @@ INSERT INTO product(product_id,product_name,price)
 
 -- 1. What is the total amount each customer spent on zomato?
 
-      select userid, sum(product.price) as total_amount from sales
-      inner join product on 
-      sales.product_id = product.product_id
-      group by userid
+      SELECT userid ,SUM(product.price) AS total_amount
+      FROM sales
+      INNER JOIN product ON sales.product_id = product.product_id
+      GROUP BY userid
 
 -- 2. How many days has each customer visited Zomato?
 
-      select userid, count(distinct created_date) as days_visited from sales
-      group by userid
+      SELECT userid ,COUNT(DISTINCT created_date) AS days_visited
+      FROM sales
+      GROUP BY userid
 
 -- 3. What was the first product purchased by each customer?
 
--- First Method - CTE + INNER JOIN
+    -- First Method - CTE + INNER JOIN
 
-      with cte as (select userid, min(created_date) as first_date from sales
-      group by userid)
-
-      select cte.*, sales.product_id from cte
-      inner join sales on 
-      cte.first_date = sales.created_date
+      WITH cte AS 
+      (SELECT userid ,MIN(created_date) AS first_date
+      FROM sales GROUP BY userid)
+      
+      SELECT cte.*, sales.product_id FROM cte
+      INNER JOIN sales ON cte.first_date = sales.created_date
 
 -- Second Method - RANK()
 
-      select * from
-      (select userid, created_date, product_id, 
-      rank() over (partition by userid order by created_date) as rn from sales) b
-      where rn = 1
+      SELECT * FROM
+      (SELECT userid, created_date, product_id, 
+      RANK() OVER (PARTITION BY userid ORDER BY created_date) AS rn FROM sales) b
+      WHERE rn = 1
 
--- 4.1 What is the most purchased item on the menu?
+-- 4.1 What is the most purchased item ON the menu?
 
-      select product_id, count(product_id) as sale_count from sales
-      group by product_id
-      order by sale_count desc
+      SELECT product_id, count(product_id) AS sale_count FROM sales
+      GROUP BY product_id
+      ORDER BY sale_count DESC
 
--- 4.2 How many times was it purchased by each user? (Product_id = 2 can be substituted with a subqury as well)
+-- 4.2 How many times was it purchased BY each user? (Product_id = 2 can be substituted with a subqury AS well)
 
-      select userid, count(product_id) as count_purchase from sales
-      where product_id = 2
-      group by userid
+      SELECT userid, count(product_id) AS count_purchase FROM sales
+      WHERE product_id = 2
+      GROUP BY userid
 
 -- 5. Which item was most popular for each customer? (Could not solve)
 
--- Three step process -- Step 1. Write a query to find the count of products along with user id and product id
+    -- Three step process -- Step 1. Write a query to find the count of products along with user id and product id
 
-      select userid, product_id, count(product_id) as count_products from sales
-      group by userid, product_id
+      SELECT userid, product_id, count(product_id) AS count_products FROM sales
+      GROUP BY userid, product_id
 
--- Step 2. - Give a rank to the count from above query by using the above query as subquery 
+    -- Step 2. - Give a RANK to the count FROM above query BY using the above query AS subquery 
 
-      select * , rank() over (partition by userid order by count_products desc) as rank_products
-      from
-      (select userid, product_id, count(product_id) as count_products from sales
-      group by userid, product_id) as a
+      SELECT * , RANK() OVER (PARTITION BY userid ORDER BY count_products DESC) AS rank_products
+      FROM
+      (SELECT userid, product_id, count(product_id) AS count_products FROM sales
+      GROUP BY userid, product_id) AS a
 
--- Step 3. Finally filter the above query using a where statement. This is done using another subquery.
--- Remember to give alias to each subquery
+    -- Step 3. Finally filter the above query using a WHERE statement. This is done using another subquery.
+    -- Remember to give alias to each subquery
 
-      select * from 
-      (select * , rank() over (partition by userid order by count_products desc) as rank_products
-      from
-      (select userid, product_id, count(product_id) as count_products from sales
-      group by userid, product_id) as a) b
-      where rank_products = 1
+      SELECT * FROM 
+      (SELECT * , RANK() OVER (PARTITION BY userid ORDER BY count_products DESC) AS rank_products
+      FROM
+      (SELECT userid, product_id, count(product_id) AS count_products FROM sales
+      GROUP BY userid, product_id) AS a) b
+      WHERE rank_products = 1
 
--- 6. Which item was purchased first by the customer after they became a gold member
+-- 6. Which item was purchased first BY the customer after they became a gold member?
 
--- Simple question with a twist - The order needs to be purchased AFTER the purchase of gold membership
--- The inital query is a inner join between gold_signup and sales with a where condition satisfying the twist
--- A simple rank() function is used to get the first product
+    -- Simple question with a twist - The ORDER needs to be purchased AFTER the purchase of gold membership
+    -- The inital query is a INNER JOIN between gold_signup and sales with a WHERE condition satisfying the twist
+    -- A simple RANK() function is used to get the first product
 
-select * from
+      SELECT * FROM
 
-(select gs.userid, gs.gold_signup_date, sales.created_date, sales.product_id,
-rank() over (partition by gs.userid order by sales.created_date) as rn
-from goldusers_signup gs
-inner join sales
-on gs.userid = sales.userid
-where sales.created_date >= gs.gold_signup_date) as a
+      (SELECT gs.userid, gs.gold_signup_date, sales.created_date, sales.product_id,
+      RANK() OVER (PARTITION BY gs.userid ORDER BY sales.created_date) AS rn
+      FROM goldusers_signup gs
+      INNER JOIN sales
+      ON gs.userid = sales.userid
+      WHERE sales.created_date >= gs.gold_signup_date) AS a
 
-where rn = 1
+      WHERE rn = 1
+
+-- 7. Which item was purchased just before the customer became a gold member?
+
+    -- Similar to last question. The created_date should be <= gold_signup_date 
+    -- Order of RANK needs to be changed to DESC
+
+      SELECT * FROM 
+
+      (SELECT gs.userid, gs.gold_signup_date, sales.created_date, sales.product_id,
+      RANK() OVER (PARTITION BY gs.userid ORDER BY sales.created_date DESC) AS rn
+      FROM goldusers_signup gs
+      INNER JOIN sales
+      ON gs.userid = sales.userid
+      WHERE sales.created_date <= gs.gold_signup_date) AS a
+
+      WHERE rn = 1
+
