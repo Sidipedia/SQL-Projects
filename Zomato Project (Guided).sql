@@ -120,3 +120,20 @@ INSERT INTO product(product_id,product_name,price)
       (select userid, product_id, count(product_id) as count_products from sales
       group by userid, product_id) as a) b
       where rank_products = 1
+
+-- 6. Which item was purchased first by the customer after they became a gold member
+
+-- Simple question with a twist - The order needs to be purchased AFTER the purchase of gold membership
+-- The inital query is a inner join between gold_signup and sales with a where condition satisfying the twist
+-- A simple rank() function is used to get the first product
+
+select * from
+
+(select gs.userid, gs.gold_signup_date, sales.created_date, sales.product_id,
+rank() over (partition by gs.userid order by sales.created_date) as rn
+from goldusers_signup gs
+inner join sales
+on gs.userid = sales.userid
+where sales.created_date >= gs.gold_signup_date) as a
+
+where rn = 1
