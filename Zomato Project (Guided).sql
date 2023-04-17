@@ -3,6 +3,7 @@
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 -- The schema used for this analysis is given below
 
 drop table if exists goldusers_signup;
@@ -79,7 +80,7 @@ INSERT INTO product(product_id,product_name,price)
       SELECT cte.*, sales.product_id FROM cte
       INNER JOIN sales ON cte.first_date = sales.created_date
 
--- Second Method - RANK()
+    -- Second Method - RANK()
 
       SELECT * FROM
       (SELECT userid, created_date, product_id, 
@@ -155,3 +156,53 @@ INSERT INTO product(product_id,product_name,price)
 
       WHERE rn = 1
 
+-- 8. What is the total orders and amount spent for each member before they became a gold member?
+
+    -- I have opted for join method to solve the question. 
+    -- To get the amount for the members before joining, the created_date needs to be less than the gold_signup_date
+
+      SELECT sales.userid, COUNT(sales.product_id) as total_products, SUM(product.price) as total_price
+      FROM sales
+      LEFT JOIN product ON sales.product_id = product.product_id
+      INNER JOIN goldusers_signup gs ON gs.userid = sales.userid
+      WHERE sales.created_date < gs.gold_signup_date
+      GROUP BY sales.userid
+
+-- 9. If buying each product generates points (For Ex - Rs 5 = 2 zomato points) and each product has different points 
+--    (P1 - Rs 5 = 1 point | P2 - Rs 10 = 5 points | P3 - Rs 5 = 1 point) Calculate:
+--    a. Points collected by each customer
+--    b. The product which generated the maximum points. 
+
+    -- Part A
+    -- The first part requires us to calculate the points as per the formula given in the question
+    -- I have done the calculation on the product table itself using a simple CASE WHEN statement 
+    -- This calcualtion is stored in a CTE expression and later used to derive the required answer
+
+      WITH product_cte AS
+      (SELECT *, CASE 
+      WHEN product_name LIKE 'p1' THEN price/5 
+      WHEN product_name LIKE 'p2' THEN (price/10)*5
+      WHEN product_name LIKE 'p3' THEN price/5 
+      END AS points FROM product)
+
+      SELECT sales.userid, SUM(product_cte.points) as total_points FROM sales
+      INNER JOIN product_cte ON sales.product_id = product_cte.product_id
+      GROUP BY sales.userid
+      
+    -- Part B
+    -- To solve this, simple replace sales.userid from the last query to sales.product_id
+    -- TOP function is used as the queries were generated on SSMS. LIMIT can be used for other versions of SQL
+    
+      WITH product_cte AS
+      (SELECT *, CASE 
+      WHEN product_name LIKE 'p1' THEN price/5 
+      WHEN product_name LIKE 'p2' THEN (price/10)*5
+      WHEN product_name LIKE 'p3' THEN price/5 
+      END AS points FROM product)
+
+      SELECT TOP 1 sales.product_id, SUM(product_cte.points) as total_points FROM sales
+      INNER JOIN product_cte ON sales.product_id = product_cte.product_id
+      GROUP BY sales.product_id
+      ORDER BY total_points DESC
+
+-- 10. 
