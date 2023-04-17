@@ -6,14 +6,14 @@
 
 -- The schema used for this analysis is given below
 
-drop table if exists goldusers_signup;
+DROP TABLE IF EXISTS goldusers_signup;
 CREATE TABLE goldusers_signup(userid integer,gold_signup_date date); 
 
 INSERT INTO goldusers_signup(userid,gold_signup_date) 
  VALUES (1,'09-22-2017'),
 (3,'04-21-2017');
 
-drop table if exists users;
+DROP TABLE IF EXISTS users;
 CREATE TABLE users(userid integer,signup_date date); 
 
 INSERT INTO users(userid,signup_date) 
@@ -21,7 +21,7 @@ INSERT INTO users(userid,signup_date)
 (2,'01-15-2015'),
 (3,'04-11-2014');
 
-drop table if exists sales;
+DROP TABLE IF EXISTS sales;
 CREATE TABLE sales(userid integer,created_date date,product_id integer); 
 
 INSERT INTO sales(userid,created_date,product_id) 
@@ -43,7 +43,7 @@ INSERT INTO sales(userid,created_date,product_id)
 (2,'09-10-2018',3);
 
 
-drop table if exists product;
+DROP TABLE IF EXISTS product;
 CREATE TABLE product(product_id integer,product_name text,price integer); 
 
 INSERT INTO product(product_id,product_name,price) 
@@ -205,4 +205,16 @@ INSERT INTO product(product_id,product_name,price)
       GROUP BY sales.product_id
       ORDER BY total_points DESC
 
--- 10. 
+-- 10. In the first year after a customer joins the gold program (including the join date),the customer is awarded 5 points for every Rs 10 spent. 
+--     Find out which customer earned the most points and their number of points during the first year.
+
+    -- The first step is to write a query with the date constraint mentioned in the question. The DATEADD function has been used for the same. 
+    -- The first join is to find the products purchased by the users in the given date constraint i.e. during first year of gold membership
+    -- The second join is to find the price of the product and apply the formula for points. 
+
+      SELECT sales.userid, (SUM(product.price)/10)*5 AS points
+      FROM goldusers_signup gs
+      INNER JOIN sales ON sales.userid = gs.userid
+      INNER JOIN product ON sales.product_id = product.product_id
+      WHERE created_date BETWEEN gold_signup_date AND DATEADD(year, 1, gold_signup_date)
+      GROUP BY sales.userid
