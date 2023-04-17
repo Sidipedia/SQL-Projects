@@ -218,3 +218,24 @@ INSERT INTO product(product_id,product_name,price)
       INNER JOIN product ON sales.product_id = product.product_id
       WHERE created_date BETWEEN gold_signup_date AND DATEADD(year, 1, gold_signup_date)
       GROUP BY sales.userid
+      
+-- 11. Rank the transanctions of customers during their gold membership. All other transactions should be marked Null
+
+    -- This problem requires the use of CASE WHEN statement in combination with the RANK function.
+    -- One problem that I faced during this question was trying to use 'NA' instead of Null.
+    -- The error I kept on getting was - Error converting data type varchar to bigint. 
+    -- Looking up this error made me realise that I need to CAST the rank function as VARCHAR in order to get the desired result. 
+
+      SELECT sales.userid AS userid, sales.created_date AS order_date, gs.gold_signup_date,
+      CASE WHEN sales.created_date >= gs.gold_signup_date 
+      THEN ROW_NUMBER() over (PARTITION by sales.userid ORDER BY sales.created_date DESC)
+      ELSE NULL END AS tran_rank
+      FROM sales
+      LEFT JOIN goldusers_signup gs ON sales.userid = gs.userid
+      
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- This concludes the basic SQL project. The dataset used here was very small inorder to have a clearer understanding of the queries. 
+-- I hope one day I can revisit this project just to see how far I have come from the day I started. 
+
