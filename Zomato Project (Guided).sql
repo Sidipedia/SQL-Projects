@@ -1,5 +1,4 @@
--- A guided project done by me to practice my learnings of SQL. Most of the questions have been answered without any help. I have marked the questions that I have
--- struggled with. 
+-- A guided project done by me to practice my learnings of SQL. 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -99,7 +98,7 @@ INSERT INTO product(product_id,product_name,price)
       WHERE product_id = 2
       GROUP BY userid
 
--- 5. Which item was most popular for each customer? (Could not solve)
+-- 5. Which item was most popular for each customer? 
 
     -- Three step process -- Step 1. Write a query to find the count of products along with user id and product id
 
@@ -236,6 +235,6 @@ INSERT INTO product(product_id,product_name,price)
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- This concludes the basic SQL project. The dataset used here was very small inorder to have a clearer understanding of the queries. 
+-- This concludes the basic SQL project. The dataset used here was very small in order to have a clearer understanding of the queries. 
 -- I hope one day I can revisit this project just to see how far I have come from the day I started. 
 
